@@ -1,30 +1,19 @@
 let store = {
-    user: { name: "Student" },
-    apod: '',
-    rovers: ['Curiosity', 'Opportunity', 'Spirit'],
+    info: '',
+    rover: 'Curiosity',
 }
-
-// add our markup to the page
 const root = document.getElementById('root')
-
 const updateStore = (store, newState) => {
     store = Object.assign(store, newState)
     render(root, store)
 }
-
 const render = async (root, state) => {
     root.innerHTML = App(state)
 }
-
-
-// create content
 const App = (state) => {
-    let { rovers, apod } = state
-
     return `
         <header></header>
         <main>
-            ${Greeting(store.user.name)}
             <section>
                 <h3>Put things on the page!</h3>
                 <p>Here is an example section.</p>
@@ -36,61 +25,16 @@ const App = (state) => {
                     explanation are returned. These keywords could be used as auto-generated hashtags for twitter or instagram feeds;
                     but generally help with discoverability of relevant imagery.
                 </p>
-                ${RoverGallery(rovers)}
+                ${RoverInfo(state)}
             </section>
         </main>
         <footer></footer>
     `
 }
-
-// listening for load event because page should load before any JS is called
 window.addEventListener('load', () => {
     render(root, store)
 })
-
-// ------------------------------------------------------  COMPONENTS
-
-// Pure function that renders conditional information -- THIS IS JUST AN EXAMPLE, you can delete it.
-const Greeting = (name) => {
-    if (name) {
-        return `
-            <h1>Welcome, ${name}!</h1>
-        `
-    }
-
-    return `
-        <h1>Hello!</h1>
-    `
-}
-
-// Example of a pure function that renders infomation requested from the backend
-const ImageOfTheDay = (apod) => {
-
-    // If image does not already exist, or it is not from today -- request it again
-    const today = new Date()
-    const photodate = new Date(apod.date)
-    console.log(photodate.getDate(), today.getDate());
-
-    console.log(photodate.getDate() === today.getDate());
-    if (!apod || apod.date === today.getDate() ) {
-        getImageOfTheDay(store)
-    }
-
-    // check if the photo of the day is actually type video!
-    if (apod.media_type === "video") {
-        return (`
-            <p>See today's featured video <a href="${apod.url}">here</a></p>
-            <p>${apod.title}</p>
-            <p>${apod.explanation}</p>
-        `)
-    } else {
-        return (`
-            <img src="${apod.image.url}" height="350px" width="100%" />
-            <p>${apod.image.explanation}</p>
-        `)
-    }
-}
-// Example of a pure function that renders infomation requested from the backend
+// Pure functions
 const RoverGallery = (rovers) => {
     rover = rovers[0].toLowerCase()
     console.log(rover)
@@ -98,42 +42,59 @@ const RoverGallery = (rovers) => {
         fetch(`http://localhost:3000/${rover}`)
         .then(res => res.json())
         .then(photos => updateStore(store, photos))
+        let res = ''
+        if (store.photos != undefined){
+            const pct = 1./store.photos.length
+            res+=`
+                <img src="${store.photos[i].img_src}" height="350px" width="${pct}%" />
+            `
+        }
+        return res
     }
     catch (err) {
-        console.log(`${rover} - ${err}`)
+        console.log(`errors: ${rover} - ${err}`)
     }
-    console.log(store.photos)
 }
-
-//Each rover component
-const EachRoverContent = (roverData, state) => {
-
-    return `
-    <div class="roverDiv">
-    <ul class="roverInfo">
-      <li>Name: ${roverData.getIn(["rover", "name"])}</li>
-      <li>ID: ${roverData.getIn(["rover", "id"])}</li>
-      <li>Launch Date: ${roverData.getIn(["rover", "launch_date"])}</li>
-      <li>Landing Date: ${roverData.getIn(["rover", "landing_date"])}</li>
-      <li>Status: ${roverData.getIn(["rover", "status"])}</li>
-      <li>Latest Photos taken on Earth Date: ${roverData.get("earth_date")}</li>
-    </ul>
-    </div>
-    <button onclick="backButton()" class="backButton">Back</button>
-    <div class="roverImagesDiv">
-    ${roverImages(state)}
-    </div>
-    <button onclick="backButton()" class="backButton">Back</button>
-    `
-  }
-  
+const RoverInfo = (state) => {
+    if (!state.info) {
+        getInfo(state);
+    } else {
+        console.log(state.info)
+        const manifest = state.info
+        const photoGrid = roverPhotos(state, markupPhoto)
+        return `
+            <p> Landing date: ${manifest.landing_date} <p/>
+            <p> Launch date: ${manifest.launch_date} <p/>
+            <p> Rover status: ${manifest.status} <p/>
+            <p> The most recent photos were taken on: ${manifest.max_date} <p/> 
+            <p> The most recent photos : <h2/>
+            ${photoGrid}
+            `
+    }
+}
+//higher order function, takes in 1 callback
+const roverPhotos = (state, cb) => {
+    if (!state.photos) {
+        getPhotos(state)
+    } 
+    else {
+        return `
+        <div class="image-grid">
+            ${state.photos.map(photo => cb(photo.img_src)).join(" ")}
+        </div>`
+    }
+}
+const markupPhoto = (photo) => {
+    return `<img class="grid-image" src=${photo} height = 300px width = 300px/>`
+}
 // ------------------------------------------------------  API CALLS
-const getImageOfTheDay = (state) => {
-    let { apod } = state
-
-    fetch(`http://localhost:3000/apod`)
-        .then(res => res.json())
-        .then(apod => updateStore(state, { apod }))
-
-    return data
+const getInfo = async (state) => {   
+    fetch(`http://localhost:3000/info/${state.rover}`)
+        .then(res => res.json())    
+        .then(info => updateStore(state, { info }))
+}
+const getPhotos = async (state) => {   
+    fetch(`http://localhost:3000/photos/${state.rover}/${state.info.max_date}`)
+        .then(res => res.json())    
+        .then(photos => updateStore(state, {photos}))
 }
