@@ -1,6 +1,7 @@
 let store = {
     info: '',
     rover: 'Curiosity',
+    rovers: ['Curiosity', 'Opportunity', 'Spirit'],
 }
 const root = document.getElementById('root')
 const updateStore = (store, newState) => {
@@ -14,47 +15,44 @@ const App = (state) => {
     return `
         <header></header>
         <main>
-            <section>
-                <h3>Put things on the page!</h3>
-                <p>Here is an example section.</p>
+            <h1 style = "text-align:center"> Welcome to the Mars-Dashboard! </h1>
+            <div align = "center">
+                <h3> To see latest rover data, select the Mars rover: </h3>
+                <select id = "rovers" onchange = "selectRover()" >
+                    <option value = "curiosity" ${roverSelected("curiosity")}> curiosity </option>
+                    <option value = "opportunity" ${roverSelected("opportunity")}> opportunity </option>
+                    <option value = "spirit" ${roverSelected("spirit")}> spirit </option>
+                </select>
                 <p>
-                    One of the most popular websites at NASA is the Astronomy Picture of the Day. In fact, this website is one of
-                    the most popular websites across all federal agencies. It has the popular appeal of a Justin Bieber video.
-                    This endpoint structures the APOD imagery and associated metadata so that it can be repurposed for other
-                    applications. In addition, if the concept_tags parameter is set to True, then keywords derived from the image
-                    explanation are returned. These keywords could be used as auto-generated hashtags for twitter or instagram feeds;
-                    but generally help with discoverability of relevant imagery.
-                </p>
-                ${RoverInfo(state)}
-            </section>
+                    Latest Information for the rover: ${state.rover}
+                    ${RoverInfo(state)}
+                </p>             
+            </div>
         </main>
         <footer></footer>
     `
+}
+const selectRover = () => {
+    var rover = document.getElementById("rovers").value;
+
+    store.rover = rover;
+
+    getInfo(store)
+    // getPhotos(store)
+
+}
+const roverSelected = (rover) => {
+    if (rover === store.rover) {
+        return "selected"
+    } else {
+        return null;
+    } 
 }
 window.addEventListener('load', () => {
     render(root, store)
 })
 // Pure functions
-const RoverGallery = (rovers) => {
-    rover = rovers[0].toLowerCase()
-    console.log(rover)
-    try{
-        fetch(`http://localhost:3000/${rover}`)
-        .then(res => res.json())
-        .then(photos => updateStore(store, photos))
-        let res = ''
-        if (store.photos != undefined){
-            const pct = 1./store.photos.length
-            res+=`
-                <img src="${store.photos[i].img_src}" height="350px" width="${pct}%" />
-            `
-        }
-        return res
-    }
-    catch (err) {
-        console.log(`errors: ${rover} - ${err}`)
-    }
-}
+
 const RoverInfo = (state) => {
     if (!state.info) {
         getInfo(state);
@@ -97,4 +95,5 @@ const getPhotos = async (state) => {
     fetch(`http://localhost:3000/photos/${state.rover}/${state.info.max_date}`)
         .then(res => res.json())    
         .then(photos => updateStore(state, {photos}))
+    console.log(`${state.rover}: ${state.info.max_date}`)
 }
