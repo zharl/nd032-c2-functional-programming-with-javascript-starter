@@ -36,7 +36,7 @@ const App = (state) => {
                     explanation are returned. These keywords could be used as auto-generated hashtags for twitter or instagram feeds;
                     but generally help with discoverability of relevant imagery.
                 </p>
-                ${ImageOfTheDay(apod)}
+                ${RoverGallery(rovers)}
             </section>
         </main>
         <footer></footer>
@@ -90,16 +90,50 @@ const ImageOfTheDay = (apod) => {
         `)
     }
 }
+// Example of a pure function that renders infomation requested from the backend
+const RoverGallery = (rovers) => {
+    rover = rovers[0].toLowerCase()
+    console.log(rover)
+    try{
+        fetch(`http://localhost:3000/${rover}`)
+        .then(res => res.json())
+        .then(photos => updateStore(store, photos))
+    }
+    catch (err) {
+        console.log(`${rover} - ${err}`)
+    }
+    console.log(store.photos)
+}
 
+//Each rover component
+const EachRoverContent = (roverData, state) => {
+
+    return `
+    <div class="roverDiv">
+    <ul class="roverInfo">
+      <li>Name: ${roverData.getIn(["rover", "name"])}</li>
+      <li>ID: ${roverData.getIn(["rover", "id"])}</li>
+      <li>Launch Date: ${roverData.getIn(["rover", "launch_date"])}</li>
+      <li>Landing Date: ${roverData.getIn(["rover", "landing_date"])}</li>
+      <li>Status: ${roverData.getIn(["rover", "status"])}</li>
+      <li>Latest Photos taken on Earth Date: ${roverData.get("earth_date")}</li>
+    </ul>
+    </div>
+    <button onclick="backButton()" class="backButton">Back</button>
+    <div class="roverImagesDiv">
+    ${roverImages(state)}
+    </div>
+    <button onclick="backButton()" class="backButton">Back</button>
+    `
+  }
+  
 // ------------------------------------------------------  API CALLS
-
-// Example API call
 const getImageOfTheDay = (state) => {
     let { apod } = state
 
     fetch(`http://localhost:3000/apod`)
         .then(res => res.json())
-        .then(apod => updateStore(store, { apod }))
+        .then(apod => updateStore(state, { apod }))
 
     return data
 }
