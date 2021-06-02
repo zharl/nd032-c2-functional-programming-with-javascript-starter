@@ -25,15 +25,13 @@ app.get("/info/:name", async (req, res) => {
     console.log("errors:", err);
   }
 })
-app.get("/photos/:name/:date", async (req, res) => {
+app.get("/photos/:name", async (req, res) => {
   const url = "https://api.nasa.gov/mars-photos/api/v1/rovers/";
-  const name = req.params.name;
-  const date = req.params.date;
-  const queryString = `${url}${name}/photos?earth_date=${date}&api_key=${process.env.API_KEY}`;
+  const queryString = `${url}${req.params.name}/latest_photos?api_key=${process.env.API_KEY}`
   try {
     const photos = await fetch(queryString)
     .then(res => res.json());
-    res.send(photos['photos']);
+    res.send(photos['latest_photos']);
   } 
   catch (err) {
     console.log("errors:", err);
